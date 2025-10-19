@@ -4,9 +4,14 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
+import numpy as np # Cần để làm tròn kết quả
+
+# Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
 DATA_FILE = "Students Social Media Addiction.csv"
 
 # --- Hàm Huấn luyện Mô hình ---
+# Sử dụng @st.cache_resource để huấn luyện mô hình 1 LẦN DUY NHẤT
+# và lưu lại (cache) để dùng cho mọi người dùng
 @st.cache_resource
 def get_model(file_path):
     """
@@ -42,17 +47,16 @@ def get_model(file_path):
     ]
 
     # 3. Tạo bộ tiền xử lý
-    categorical_features = ['Gender', 'Academic_Level', 'Most_Used_Platform']
-numerical_features = ['Mental_Health_Score', 'Avg_Daily_Usage_Hours', 'Sleep_Hours_Per_Night']
-
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features),
-        ('num', 'passthrough', numerical_features)
-    ])
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', 'passthrough', numerical_features),
+            ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
+        ],
+        remainder='passthrough'
+    )
 
     # 4. Tạo Pipeline (Bao gồm Tiền xử lý + Mô hình Hồi quy)
-    model = DecisionTreeRegressor(max_depth=3,random_state=42,min_samples_leaf = 2)
+    model = DecisionTreeRegressor(max_depth=3,random_state=42)
 
     pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
@@ -103,31 +107,31 @@ if model_loaded:
     # 2. Trình độ học vấn
     academic_level = st.sidebar.selectbox(
         "Trình độ học vấn (Academic_Level):",
-        unique_levels 
+        unique_levels # Lấy từ dữ liệu gốc
     )
 
     # 3. Nền tảng sử dụng nhiều nhất
     most_used_platform = st.sidebar.selectbox(
         "Nền tảng hay dùng (Most_Used_Platform):",
-        unique_platforms 
+        unique_platforms # Lấy từ dữ liệu gốc
     )
 
     # 4. Sức khỏe tinh thần (thanh trượt)
     mental_health = st.sidebar.slider(
         "Điểm Sức khỏe tinh thần (1-10):",
-        min_value=1.0, max_value=10.0, value=7.0, step=1 
+        min_value=1, max_value=10, value=7, step=1 # Giá trị mặc định là 7
     )
 
     # 5. Giờ sử dụng trung bình (thanh trượt)
     usage_hours = st.sidebar.slider(
         "Giờ dùng trung bình/ngày:",
-        min_value=0.0, max_value=12.0, value=4.0, step=0.1 
+        min_value=0.0, max_value=12.0, value=4.0, step=0.1 # Mặc định 4.0 giờ
     )
 
     # 6. Giờ ngủ (thanh trượt)
     sleep_hours = st.sidebar.slider(
         "Giờ ngủ/đêm:",
-        min_value=4.0, max_value=10.0, value=7.0, step=0.1
+        min_value=4.0, max_value=10.0, value=7.0, step=0.1 # Mặc định 7.0 giờ
     )
 
     # --- Nút dự đoán ---
@@ -161,7 +165,7 @@ if model_loaded:
         # Sử dụng st.metric để hiển thị con số thật đẹp
         st.metric(
             label="Điểm Nghiện Dự đoán (Addicted_Score)",
-            value=f"{predicted_score:.5f}", # Làm tròn 5 chữ số
+            value=f"{predicted_score:.3f}", 
         )
 
         # Đánh giá nhanh mức độ
@@ -176,6 +180,3 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
-
-
-
