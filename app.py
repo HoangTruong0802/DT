@@ -103,12 +103,12 @@ st.write("Nhập thông tin của sinh viên vào thanh bên trái để mô hì
 st.write("---")
 
     # --- Thanh bên (Sidebar) để nhập liệu
-    gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
-    academic_level = st.sidebar.selectbox("Trình độ học vấn (Academic_Level):", unique_levels)
-    most_used_platform = st.sidebar.selectbox("Nền tảng hay dùng (Most_Used_Platform):", unique_platforms)
-    mental_health = st.sidebar.slider("Điểm Sức khỏe tinh thần (1-10):", 1, 10, 7, 1)
-    usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0, 0.1)
-    sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
+gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
+academic_level = st.sidebar.selectbox("Trình độ học vấn (Academic_Level):", unique_levels)
+most_used_platform = st.sidebar.selectbox("Nền tảng hay dùng (Most_Used_Platform):", unique_platforms)
+mental_health = st.sidebar.slider("Điểm Sức khỏe tinh thần (1-10):", 1, 10, 7, 1)
+usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0, 0.1)
+sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
 
     # --- Nút dự đoán
     if st.sidebar.button("Nhấn để Dự đoán"):
@@ -146,6 +146,7 @@ st.write("---")
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
 
