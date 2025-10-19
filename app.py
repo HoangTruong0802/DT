@@ -103,8 +103,6 @@ st.write("Nhập thông tin của sinh viên vào thanh bên trái để mô hì
 st.write("---")
 
     # --- Thanh bên (Sidebar) để nhập liệu
-    st.sidebar.header("Nhập thông tin sinh viên:")
-
     gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
     academic_level = st.sidebar.selectbox("Trình độ học vấn (Academic_Level):", unique_levels)
     most_used_platform = st.sidebar.selectbox("Nền tảng hay dùng (Most_Used_Platform):", unique_platforms)
@@ -148,6 +146,7 @@ st.write("---")
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
 
