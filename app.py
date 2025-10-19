@@ -163,7 +163,7 @@ if model_loaded:
         # Sử dụng st.metric để hiển thị con số thật đẹp
         st.metric(
             label="Điểm Nghiện Dự đoán (Addicted_Score)",
-            value=f"{predicted_score:.2f}", # Làm tròn 2 chữ số
+            value=f"{predicted_score:.5f}", # Làm tròn 5 chữ số
         )
 
         # Đánh giá nhanh mức độ
@@ -178,3 +178,4 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
