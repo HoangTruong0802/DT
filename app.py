@@ -90,8 +90,11 @@ def get_model(file_path):
 # --- Tải mô hình ---
 # Lời gọi hàm này sẽ được cache lại
 try:
-    pipeline, unique_levels, unique_platforms = get_model(DATA_FILE)
+    # Nhận thêm điểm "score"
+    pipeline, unique_levels, unique_platforms, model_score = get_model(DATA_FILE)
     model_loaded = True
+# ...
+st.write("---")
 except FileNotFoundError:
     st.error(f"Lỗi: Không tìm thấy tệp dữ liệu '{DATA_FILE}'.")
     st.error("Vui lòng đảm bảo tệp CSV nằm cùng thư mục với tệp app.py.")
@@ -195,4 +198,5 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
