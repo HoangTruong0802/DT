@@ -84,7 +84,6 @@ def get_model(file_path):
 
 # --- Tải mô hình ---
 try:
-    Nhận thêm model_score ---
     pipeline, unique_levels, unique_platforms, model_score = get_model(DATA_FILE)
     model_loaded = True
 except FileNotFoundError:
@@ -149,5 +148,6 @@ st.write("---")
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
