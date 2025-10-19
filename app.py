@@ -1,6 +1,22 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import warnings
+
+# Tắt cảnh báo
+warnings.filterwarnings('ignore')
+
+# --- Tải mô hình đã huấn luyện ---
+# Đảm bảo tệp 'model.pkl' ở cùng thư mục với 'app.py'
+try:
+    pipeline = joblib.load("model.pkl")
+except FileNotFoundError:
+    st.error("Lỗi: Không tìm thấy tệp 'model.pkl'. Hãy đảm bảo bạn đã chạy script huấn luyện và tệp model.pkl ở cùng thư mục.")
+    st.stop()
+except Exception as e:
+    st.error(f"Đã xảy ra lỗi khi tải mô hình: {e}")
+    st.stop()
+
 
 # --- Xây dựng giao diện Streamlit ---
 st.title("📈 Dự đoán Điểm Nghiện Mạng Xã hội của Sinh viên")
@@ -73,4 +89,3 @@ if st.button('🚀 Dự đoán Điểm Nghiện'):
 
     except Exception as e:
         st.error(f"Đã xảy ra lỗi trong quá trình dự đoán: {e}")
-
