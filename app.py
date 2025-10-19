@@ -4,19 +4,26 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
+import numpy as np # Cần để làm tròn kết quả
 
+# Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
 DATA_FILE = "Students Social Media Addiction.csv"
 
 # --- Hàm Huấn luyện Mô hình ---
+# Sử dụng @st.cache_resource để huấn luyện mô hình 1 LẦN DUY NHẤT
+# và lưu lại (cache) để dùng cho mọi người dùng
 @st.cache_resource
 def get_model(file_path):
     """
-    Hàm này tải dữ liệu, CHIA TÁCH, tiền xử lý, huấn luyện
-    và CHẤM ĐIỂM mô hình.
+    Hàm này tải dữ liệu, tiền xử lý và huấn luyện mô hình.
+    Nó chỉ chạy 1 lần duy nhất khi app khởi động.
     """
     # 1. Tải dữ liệu
     df = pd.read_csv(file_path)
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_all, y_all, test_size=0.2, random_state=42
+    )
 
     # 2. Xác định đặc trưng (6 cột) và mục tiêu
     target_column = 'Addicted_Score'
@@ -31,10 +38,7 @@ def get_model(file_path):
 
     X_all = df[features]
     y_all = df[target_column]
-    # 80% để huấn luyện (train), 20% để kiểm tra (test)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_all, y_all, test_size=0.2, random_state=42
-    )
+
     numerical_features = [
         'Mental_Health_Score',
         'Avg_Daily_Usage_Hours',
@@ -55,36 +59,38 @@ def get_model(file_path):
         remainder='passthrough'
     )
 
-    # 4. Tạo Pipeline với mô hình đã "khử nhiễu" 
-    model = DecisionTreeRegressor(
-        random_state=42,
+    # 4. Tạo Pipeline (Bao gồm Tiền xử lý + Mô hình Hồi quy)
+    model = DecisionTreeRegressor(random_state=42,
         max_depth=7,
         min_samples_leaf=10,
-        min_samples_split=20
-    )
+        min_samples_split=20)
 
     pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
         ('regressor', model)
     ])
 
-    # 5. Huấn luyện mô hình CHỈ trên 80% dữ liệu (tập Train) ---
+   # 5. Huấn luyện mô hình CHỈ TRÊN TẬP TRAIN,Chấm điểm mô hình trên TẬP TEST (dữ liệu lạ)
     pipeline.fit(X_train, y_train)
-
-    # 6. Chấm điểm mô hình trên 20% dữ liệu lạ (tập Test) ---
     y_pred = pipeline.predict(X_test)
-    model_score = r2_score(y_test, y_pred) # Tính điểm R-squared
+    score = r2_score(y_test, y_pred)
+    y_pred = pipeline.predict(X_test)
+    score = r2_score(y_test, y_pred)
+    unique_levels = df['Academic_Level'].unique()
+    unique_platforms = df['Most_Used_Platform'].unique()
+    #  Trả về mô hình VÀ điểm số
+    return pipeline, unique_levels, unique_platforms, score
 
-    # 7. Trả về các giá trị duy nhất để dùng cho selectbox
+    # 6. Trả về các giá trị duy nhất để dùng cho selectbox
     unique_levels = df['Academic_Level'].unique()
     unique_platforms = df['Most_Used_Platform'].unique()
 
-    # 8.  Trả về cả điểm số (score)
-    return pipeline, unique_levels, unique_platforms, model_score
+    return pipeline, unique_levels, unique_platforms
 
 # --- Tải mô hình ---
+# Lời gọi hàm này sẽ được cache lại
 try:
-    pipeline, unique_levels, unique_platforms, model_score = get_model(DATA_FILE)
+    pipeline, unique_levels, unique_platforms = get_model(DATA_FILE)
     model_loaded = True
 except FileNotFoundError:
     st.error(f"Lỗi: Không tìm thấy tệp dữ liệu '{DATA_FILE}'.")
@@ -97,21 +103,57 @@ except Exception as e:
 
 # --- BẮT ĐẦU XÂY DỰNG GIAO DIỆN STREAMLIT ---
 
-st.set_page_config(page_title="Dự đoán Nghiện MXH", layout="wide")
+st.set_page_config(page_title="Dự đoán Nghiện MXH", layout="wide") # Đặt tiêu đề trang
 st.title("🤖 Demo Mô hình Dự đoán Điểm Nghiện Mạng Xã Hội")
 st.write("Nhập thông tin của sinh viên vào thanh bên trái để mô hình dự đoán điểm nghiện (`Addicted_Score`).")
 st.write("---")
 
-    # --- Thanh bên (Sidebar) để nhập liệu
-gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
-academic_level = st.sidebar.selectbox("Trình độ học vấn (Academic_Level):", unique_levels)
-most_used_platform = st.sidebar.selectbox("Nền tảng hay dùng (Most_Used_Platform):", unique_platforms)
-mental_health = st.sidebar.slider("Điểm Sức khỏe tinh thần (1-10):", 1, 10, 7, 1)
-usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0, 0.1)
-sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
+# Chỉ hiển thị giao diện nhập liệu nếu model đã tải thành công
+if model_loaded:
+    # --- Thanh bên (Sidebar) để nhập liệu ---
+    st.sidebar.header("Nhập thông tin sinh viên:")
 
-    # --- Nút dự đoán
-if st.sidebar.button("Nhấn để Dự đoán"):
+    # 1. Giới tính
+    gender = st.sidebar.selectbox(
+        "Giới tính (Gender):",
+        ['Female', 'Male'] # Giả sử chỉ có 2 giá trị này
+    )
+
+    # 2. Trình độ học vấn
+    academic_level = st.sidebar.selectbox(
+        "Trình độ học vấn (Academic_Level):",
+        unique_levels # Lấy từ dữ liệu gốc
+    )
+
+    # 3. Nền tảng sử dụng nhiều nhất
+    most_used_platform = st.sidebar.selectbox(
+        "Nền tảng hay dùng (Most_Used_Platform):",
+        unique_platforms # Lấy từ dữ liệu gốc
+    )
+
+    # 4. Sức khỏe tinh thần (thanh trượt)
+    mental_health = st.sidebar.slider(
+        "Điểm Sức khỏe tinh thần (1-10):",
+        min_value=1, max_value=10, value=7, step=1 # Giá trị mặc định là 7
+    )
+
+    # 5. Giờ sử dụng trung bình (thanh trượt)
+    usage_hours = st.sidebar.slider(
+        "Giờ dùng trung bình/ngày:",
+        min_value=0.0, max_value=12.0, value=4.0, step=0.1 # Mặc định 4.0 giờ
+    )
+
+    # 6. Giờ ngủ (thanh trượt)
+    sleep_hours = st.sidebar.slider(
+        "Giờ ngủ/đêm:",
+        min_value=4.0, max_value=10.0, value=7.0, step=0.1 # Mặc định 7.0 giờ
+    )
+
+    # --- Nút dự đoán ---
+    if st.sidebar.button("Nhấn để Dự đoán"):
+
+        # 1. Tạo DataFrame từ dữ liệu nhập vào
+        # DataFrame này phải có tên cột Y HỆT như lúc huấn luyện
         input_data = {
             'Gender': [gender],
             'Academic_Level': [academic_level],
@@ -123,15 +165,22 @@ if st.sidebar.button("Nhấn để Dự đoán"):
         input_df = pd.DataFrame(input_data)
 
         st.subheader("Thông tin bạn đã nhập:")
-        st.dataframe(input_df)
+        st.dataframe(input_df) # Hiển thị lại dữ liệu nhập
 
+        # 2. Gọi pipeline để dự đoán
+        # Pipeline sẽ tự động tiền xử lý (OneHotEncoder) dữ liệu này
         prediction = pipeline.predict(input_df)
+
+        # Lấy giá trị dự đoán (là một con số)
         predicted_score = prediction[0]
 
+        # 3. Hiển thị kết quả
         st.subheader("Kết quả Dự đoán:")
+
+        # Sử dụng st.metric để hiển thị con số thật đẹp
         st.metric(
             label="Điểm Nghiện Dự đoán (Addicted_Score)",
-            value=f"{predicted_score:.5f}", # (Vẫn giữ 5 chữ số)
+            value=f"{predicted_score:.5f}", # SỬA Ở ĐÂY: Làm tròn 5 chữ số
         )
 
         # Đánh giá nhanh mức độ
@@ -144,11 +193,6 @@ if st.sidebar.button("Nhấn để Dự đoán"):
         else:
             st.success("✅ Mức độ nghiện dự đoán: Thấp")
 
-else:
+    else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
-
-
-
-
-
-
+}
