@@ -163,5 +163,53 @@ if model_loaded:
     # 6. Giờ ngủ (thanh trượt)
     sleep_hours = st.sidebar.slider(
         "Giờ ngủ/đêm:",
-        min_value=4.0, max_value=10.0, value=7.0,)
+        min_value=4.0, max_value=10.0, value=7.0, step=0.1 # Mặc định 7.0 giờ
+    )
 
+    # --- Nút dự đoán ---
+    if st.sidebar.button("Nhấn để Dự đoán"):
+
+        # 1. Tạo DataFrame từ dữ liệu nhập vào
+        # DataFrame này phải có tên cột Y HỆT như lúc huấn luyện
+        input_data = {
+            'Gender': [gender],
+            'Academic_Level': [academic_level],
+            'Mental_Health_Score': [mental_health],
+            'Avg_Daily_Usage_Hours': [usage_hours],
+            'Most_Used_Platform': [most_used_platform],
+            'Sleep_Hours_Per_Night': [sleep_hours]
+        }
+        input_df = pd.DataFrame(input_data)
+
+        st.subheader("Thông tin bạn đã nhập:")
+        st.dataframe(input_df) # Hiển thị lại dữ liệu nhập
+
+        # 2. Gọi pipeline để dự đoán
+        # Pipeline sẽ tự động tiền xử lý (OneHotEncoder) dữ liệu này
+        prediction = pipeline.predict(input_df)
+
+        # Lấy giá trị dự đoán (là một con số)
+        predicted_score = prediction[0]
+
+        # 3. Hiển thị kết quả
+        st.subheader("Kết quả Dự đoán:")
+
+        # Sử dụng st.metric để hiển thị con số thật đẹp
+        st.metric(
+            label="Điểm Nghiện Dự đoán (Addicted_Score)",
+            value=f"{predicted_score:.2f}", # Làm tròn 2 chữ số
+        )
+
+        # Đánh giá nhanh mức độ
+        if predicted_score >= 8.0:
+            st.error("🚨 Mức độ nghiện dự đoán: Rất Cao")
+        elif predicted_score >= 6.0:
+            st.warning("⚠️ Mức độ nghiện dự đoán: Cao")
+        elif predicted_score >= 4.0:
+            st.info("ℹ️ Mức độ nghiện dự đoán: Trung bình")
+        else:
+            st.success("✅ Mức độ nghiện dự đoán: Thấp")
+
+    else:
+        st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+}
