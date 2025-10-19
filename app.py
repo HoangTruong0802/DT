@@ -4,11 +4,14 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
+import numpy as np # Cần để làm tròn kết quả
 
-# Tên tệp dữ liệu mới
-DATA_FILE = "teen_phone_addiction_dataset.csv"
+# --- THÊM MỚI: Thư viện để chia dữ liệu và chấm điểm ---
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score # Dùng để tính điểm R-squared
+
+# Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
+DATA_FILE = "Students Social Media Addiction.csv"
 
 # --- Hàm Huấn luyện Mô hình ---
 @st.cache_resource
@@ -16,58 +19,43 @@ def get_model(file_path):
     """
     Hàm này tải dữ liệu, CHIA TÁCH, tiền xử lý, huấn luyện
     và CHẤM ĐIỂM mô hình.
-    Nó cũng trả về các giá trị cho UI (dropdowns và sliders).
     """
     # 1. Tải dữ liệu
-    try:
-        df = pd.read_csv(file_path)
-    except FileNotFoundError:
-        st.error(f"Lỗi: Không tìm thấy tệp dữ liệu '{file_path}'.")
-        st.error("Vui lòng đảm bảo tệp CSV nằm cùng thư mục với tệp app.py.")
-        return None, None, None, None, None, None
+    df = pd.read_csv(file_path)
 
-    # 2. Xác định đặc trưng và mục tiêu
-    target_column = 'Addiction_Level'
-    
-    # Chọn các đặc trưng mới dựa trên dữ liệu
+    # 2. Xác định đặc trưng (6 cột) và mục tiêu
+    target_column = 'Addicted_Score'
     features = [
-        'Age',
         'Gender',
-        'School_Grade',
-        'Daily_Usage_Hours',
-        'Sleep_Hours',
-        'Academic_Performance',
-        'Anxiety_Level',
-        'Depression_Level',
-        'Self_Esteem',
-        'Phone_Usage_Purpose'
+        'Academic_Level',
+        'Mental_Health_Score',
+        'Avg_Daily_Usage_Hours',
+        'Most_Used_Platform',
+        'Sleep_Hours_Per_Night'
     ]
-    
+
     X_all = df[features]
     y_all = df[target_column]
 
-    # Phân loại đặc trưng
-    numerical_features = [
-        'Age', 
-        'Daily_Usage_Hours', 
-        'Sleep_Hours', 
-        'Academic_Performance', 
-        'Anxiety_Level', 
-        'Depression_Level', 
-        'Self_Esteem'
-    ]
-    categorical_features = [
-        'Gender', 
-        'School_Grade', 
-        'Phone_Usage_Purpose'
-    ]
-
-    # 3. Chia dữ liệu: 80% train, 20% test
+    # --- SỬA ĐỔI: Chia dữ liệu thành 2 phần ---
+    # 80% để huấn luyện (train), 20% để kiểm tra (test)
     X_train, X_test, y_train, y_test = train_test_split(
         X_all, y_all, test_size=0.2, random_state=42
     )
 
-    # 4. Tạo bộ tiền xử lý
+    # (Các đặc trưng số và chữ giữ nguyên)
+    numerical_features = [
+        'Mental_Health_Score',
+        'Avg_Daily_Usage_Hours',
+        'Sleep_Hours_Per_Night'
+    ]
+    categorical_features = [
+        'Gender',
+        'Academic_Level',
+        'Most_Used_Platform'
+    ]
+
+    # 3. Tạo bộ tiền xử lý (giữ nguyên)
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', 'passthrough', numerical_features),
@@ -76,7 +64,7 @@ def get_model(file_path):
         remainder='passthrough'
     )
 
-    # 5. Tạo Pipeline với mô hình đã "khử nhiễu"
+    # 4. Tạo Pipeline với mô hình đã "khử nhiễu" (giữ nguyên)
     model = DecisionTreeRegressor(
         random_state=42,
         max_depth=7,
@@ -89,44 +77,29 @@ def get_model(file_path):
         ('regressor', model)
     ])
 
-    # 6. Huấn luyện mô hình CHỈ trên 80% dữ liệu (tập Train)
+    # 5. --- SỬA ĐỔI: Huấn luyện mô hình CHỈ trên 80% dữ liệu (tập Train) ---
     pipeline.fit(X_train, y_train)
 
-    # 7. Chấm điểm mô hình trên 20% dữ liệu lạ (tập Test)
+    # 6. --- THÊM MỚI: Chấm điểm mô hình trên 20% dữ liệu lạ (tập Test) ---
     y_pred = pipeline.predict(X_test)
-    model_score = r2_score(y_test, y_pred)
+    model_score = r2_score(y_test, y_pred) # Tính điểm R-squared
 
-    # 8. Lấy các giá trị UI (cho selectbox và slider)
-    unique_genders = df['Gender'].unique()
-    unique_grades = sorted(df['School_Grade'].unique())
-    unique_purposes = df['Phone_Usage_Purpose'].unique()
-    
-    # Tạo một dict chứa min/max cho các thanh trượt
-    slider_ranges = {
-        'Age': (int(df['Age'].min()), int(df['Age'].max())),
-        'Daily_Usage_Hours': (0.0, 12.0), # Giữ cố định để dễ nhập
-        'Sleep_Hours': (3.0, 10.0), # Giữ cố định
-        'Academic_Performance': (int(df['Academic_Performance'].min()), int(df['Academic_Performance'].max())),
-        'Anxiety_Level': (int(df['Anxiety_Level'].min()), int(df['Anxiety_Level'].max())),
-        'Depression_Level': (int(df['Depression_Level'].min()), int(df['Depression_Level'].max())),
-        'Self_Esteem': (int(df['Self_Esteem'].min()), int(df['Self_Esteem'].max()))
-    }
+    # 7. Trả về các giá trị duy nhất để dùng cho selectbox
+    unique_levels = df['Academic_Level'].unique()
+    unique_platforms = df['Most_Used_Platform'].unique()
 
-    return pipeline, unique_genders, unique_grades, unique_purposes, slider_ranges, model_score
+    # 8. --- SỬA ĐỔI: Trả về cả điểm số (score) ---
+    return pipeline, unique_levels, unique_platforms, model_score
 
 # --- Tải mô hình ---
 try:
-    (
-        pipeline, 
-        unique_genders, 
-        unique_grades, 
-        unique_purposes, 
-        slider_ranges, 
-        model_score
-    ) = get_model(DATA_FILE)
-    
-    model_loaded = (pipeline is not None)
-    
+    # --- SỬA ĐỔI: Nhận thêm model_score ---
+    pipeline, unique_levels, unique_platforms, model_score = get_model(DATA_FILE)
+    model_loaded = True
+except FileNotFoundError:
+    st.error(f"Lỗi: Không tìm thấy tệp dữ liệu '{DATA_FILE}'.")
+    st.error("Vui lòng đảm bảo tệp CSV nằm cùng thư mục với tệp app.py.")
+    model_loaded = False
 except Exception as e:
     st.error(f"Lỗi khi tải hoặc huấn luyện mô hình: {e}")
     model_loaded = False
@@ -134,129 +107,63 @@ except Exception as e:
 
 # --- BẮT ĐẦU XÂY DỰNG GIAO DIỆN STREAMLIT ---
 
-st.set_page_config(page_title="Dự đoán Nghiện Điện thoại", layout="wide")
-st.title("📱 Demo Mô hình Dự đoán Mức độ Nghiện Điện thoại (Teen)")
-st.write("Nhập thông tin của học sinh vào thanh bên trái để mô hình dự đoán điểm nghiện (`Addiction_Level`).")
+st.set_page_config(page_title="Dự đoán Nghiện MXH", layout="wide")
+st.title("🤖 Demo Mô hình Dự đoán Điểm Nghiện Mạng Xã Hội")
+st.write("Nhập thông tin của sinh viên vào thanh bên trái để mô hình dự đoán điểm nghiện (`Addicted_Score`).")
 st.write("---")
 
 if model_loaded:
-    # --- Hiển thị điểm số của mô hình ---
+    # --- THÊM MỚI: Hiển thị điểm số của mô hình ---
     st.subheader("Đánh giá độ ổn định của mô hình")
     st.metric(label="Điểm tin cậy R-squared (trên dữ liệu Test)", value=f"{model_score:.4f}")
+    
+    # Giải thích ý nghĩa của điểm số
     if model_score < 0.3:
         st.error("Điểm quá thấp! Mô hình này không đáng tin cậy.")
     elif model_score < 0.6:
-        st.warning(f"Điểm trung bình ({model_score:.1%}). Mô hình chỉ giải thích được một phần nhỏ.")
+        st.warning(f"Điểm trung bình ({model_score:.1%}). Mô hình chỉ giải thích được một phần nhỏ, dự đoán có thể sai lệch nhiều.")
     else:
-        st.success(f"Điểm khá tốt ({model_score:.1%})! Mô hình giải thích được phần lớn dữ liệu.")
+        st.success(f"Điểm khá tốt ({model_score:.1%})! Mô hình giải thích được phần lớn sự biến động của dữ liệu. Có thể tin cậy ở mức demo.")
     st.caption("Điểm $R^2$ (từ -∞ đến 1.0) đo lường mức độ mô hình dự đoán tốt trên *dữ liệu lạ*. Càng gần 1.0 càng tốt.")
     st.write("---")
-
-    # --- Thanh bên (Sidebar) để nhập liệu ---
-    st.sidebar.header("Nhập thông tin học sinh:")
-
-    # --- Nhóm đặc trưng nhân khẩu học ---
-    st.sidebar.subheader("Thông tin cơ bản")
-    age = st.sidebar.slider(
-        "Tuổi (Age):",
-        min_value=slider_ranges['Age'][0], 
-        max_value=slider_ranges['Age'][1], 
-        value=15
-    )
-    gender = st.sidebar.selectbox(
-        "Giới tính (Gender):",
-        unique_genders
-    )
-    school_grade = st.sidebar.selectbox(
-        "Khối lớp (School_Grade):",
-        unique_grades
-    )
-    
-    # --- Nhóm đặc trưng sử dụng ---
-    st.sidebar.subheader("Thói quen sử dụng")
-    daily_usage = st.sidebar.slider(
-        "Giờ dùng trung bình/ngày (Daily_Usage_Hours):",
-        min_value=slider_ranges['Daily_Usage_Hours'][0], 
-        max_value=slider_ranges['Daily_Usage_Hours'][1], 
-        value=5.0, 
-        step=0.1
-    )
-    sleep = st.sidebar.slider(
-        "Giờ ngủ/đêm (Sleep_Hours):",
-        min_value=slider_ranges['Sleep_Hours'][0], 
-        max_value=slider_ranges['Sleep_Hours'][1], 
-        value=7.0, 
-        step=0.1
-    )
-    phone_purpose = st.sidebar.selectbox(
-        "Mục đích dùng chính (Phone_Usage_Purpose):",
-        unique_purposes
-    )
-
-    # --- Nhóm đặc trưng tâm lý / học vấn ---
-    st.sidebar.subheader("Sức khỏe & Học tập (1-10)")
-    academic = st.sidebar.slider(
-        "Kết quả học tập (Academic_Performance 0-100):",
-        min_value=slider_ranges['Academic_Performance'][0], 
-        max_value=slider_ranges['Academic_Performance'][1], 
-        value=75
-    )
-    anxiety = st.sidebar.slider(
-        "Mức độ Lo âu (Anxiety_Level):",
-        min_value=slider_ranges['Anxiety_Level'][0], 
-        max_value=slider_ranges['Anxiety_Level'][1], 
-        value=5
-    )
-    depression = st.sidebar.slider(
-        "Mức độ Trầm cảm (Depression_Level):",
-        min_value=slider_ranges['Depression_Level'][0], 
-        max_value=slider_ranges['Depression_Level'][1], 
-        value=5
-    )
-    self_esteem = st.sidebar.slider(
-        "Lòng Tự trọng (Self_Esteem):",
-        min_value=slider_ranges['Self_Esteem'][0], 
-        max_value=slider_ranges['Self_Esteem'][1], 
-        value=5
-    )
+    # --- Hết phần thêm mới ---
 
 
-    # --- Nút dự đoán ---
+    # --- Thanh bên (Sidebar) để nhập liệu (Giữ nguyên) ---
+    st.sidebar.header("Nhập thông tin sinh viên:")
+
+    gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
+    academic_level = st.sidebar.selectbox("Trình độ học vấn (Academic_Level):", unique_levels)
+    most_used_platform = st.sidebar.selectbox("Nền tảng hay dùng (Most_Used_Platform):", unique_platforms)
+    mental_health = st.sidebar.slider("Điểm Sức khỏe tinh thần (1-10):", 1, 10, 7, 1)
+    usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0, 0.1)
+    sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
+
+    # --- Nút dự đoán (Giữ nguyên) ---
     if st.sidebar.button("Nhấn để Dự đoán"):
-
-        # 1. Tạo DataFrame từ dữ liệu nhập vào
-        # Tên cột PHẢI Y HỆT như trong danh sách 'features'
         input_data = {
-            'Age': [age],
             'Gender': [gender],
-            'School_Grade': [school_grade],
-            'Daily_Usage_Hours': [daily_usage],
-            'Sleep_Hours': [sleep],
-            'Academic_Performance': [academic],
-            'Anxiety_Level': [anxiety],
-            'Depression_Level': [depression],
-            'Self_Esteem': [self_esteem],
-            'Phone_Usage_Purpose': [phone_purpose]
+            'Academic_Level': [academic_level],
+            'Mental_Health_Score': [mental_health],
+            'Avg_Daily_Usage_Hours': [usage_hours],
+            'Most_Used_Platform': [most_used_platform],
+            'Sleep_Hours_Per_Night': [sleep_hours]
         }
         input_df = pd.DataFrame(input_data)
 
         st.subheader("Thông tin bạn đã nhập:")
-        st.dataframe(input_df) 
+        st.dataframe(input_df)
 
-        # 2. Gọi pipeline để dự đoán
         prediction = pipeline.predict(input_df)
         predicted_score = prediction[0]
 
-        # 3. Hiển thị kết quả
         st.subheader("Kết quả Dự đoán:")
-        
-        # Dùng thang điểm 1-10 cho dễ hiểu (giống như các thang đo tâm lý)
         st.metric(
-            label="Điểm Nghiện Dự đoán (Addiction_Level)",
-            value=f"{predicted_score:.4f}",
+            label="Điểm Nghiện Dự đoán (Addicted_Score)",
+            value=f"{predicted_score:.5f}", # (Vẫn giữ 5 chữ số)
         )
-        
-        # Đánh giá nhanh mức độ (Giả sử thang điểm 1-10)
+
+        # Đánh giá nhanh mức độ (Giữ nguyên)
         if predicted_score >= 8.0:
             st.error("🚨 Mức độ nghiện dự đoán: Rất Cao")
         elif predicted_score >= 6.0:
@@ -268,3 +175,4 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+}
