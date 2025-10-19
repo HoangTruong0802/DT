@@ -56,7 +56,7 @@ def get_model(file_path):
     )
 
     # 4. Tạo Pipeline (Bao gồm Tiền xử lý + Mô hình Hồi quy)
-    model = DecisionTreeRegressor(max_depth=3,random_state=42)
+    model = DecisionTreeRegressor(max_depth=3,random_state=42,min_samples_leaf=10,min_samples_split=20)
 
     pipeline = Pipeline(steps=[
         ('preprocessor', preprocessor),
@@ -180,5 +180,6 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
