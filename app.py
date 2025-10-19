@@ -4,13 +4,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
-import numpy as np # Cần để làm tròn kết quả
-
-# --- THÊM MỚI: Thư viện để chia dữ liệu và chấm điểm ---
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score # Dùng để tính điểm R-squared
 
-# Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
 DATA_FILE = "Students Social Media Addiction.csv"
 
 # --- Hàm Huấn luyện Mô hình ---
@@ -36,14 +31,10 @@ def get_model(file_path):
 
     X_all = df[features]
     y_all = df[target_column]
-
-    # --- SỬA ĐỔI: Chia dữ liệu thành 2 phần ---
     # 80% để huấn luyện (train), 20% để kiểm tra (test)
     X_train, X_test, y_train, y_test = train_test_split(
         X_all, y_all, test_size=0.2, random_state=42
     )
-
-    # (Các đặc trưng số và chữ giữ nguyên)
     numerical_features = [
         'Mental_Health_Score',
         'Avg_Daily_Usage_Hours',
@@ -55,7 +46,7 @@ def get_model(file_path):
         'Most_Used_Platform'
     ]
 
-    # 3. Tạo bộ tiền xử lý (giữ nguyên)
+    # 3. Tạo bộ tiền xử lý
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', 'passthrough', numerical_features),
@@ -64,7 +55,7 @@ def get_model(file_path):
         remainder='passthrough'
     )
 
-    # 4. Tạo Pipeline với mô hình đã "khử nhiễu" (giữ nguyên)
+    # 4. Tạo Pipeline với mô hình đã "khử nhiễu" 
     model = DecisionTreeRegressor(
         random_state=42,
         max_depth=7,
@@ -77,10 +68,10 @@ def get_model(file_path):
         ('regressor', model)
     ])
 
-    # 5. --- SỬA ĐỔI: Huấn luyện mô hình CHỈ trên 80% dữ liệu (tập Train) ---
+    # 5. Huấn luyện mô hình CHỈ trên 80% dữ liệu (tập Train) ---
     pipeline.fit(X_train, y_train)
 
-    # 6. --- THÊM MỚI: Chấm điểm mô hình trên 20% dữ liệu lạ (tập Test) ---
+    # 6. Chấm điểm mô hình trên 20% dữ liệu lạ (tập Test) ---
     y_pred = pipeline.predict(X_test)
     model_score = r2_score(y_test, y_pred) # Tính điểm R-squared
 
@@ -88,12 +79,12 @@ def get_model(file_path):
     unique_levels = df['Academic_Level'].unique()
     unique_platforms = df['Most_Used_Platform'].unique()
 
-    # 8. --- SỬA ĐỔI: Trả về cả điểm số (score) ---
+    # 8.  Trả về cả điểm số (score)
     return pipeline, unique_levels, unique_platforms, model_score
 
 # --- Tải mô hình ---
 try:
-    # --- SỬA ĐỔI: Nhận thêm model_score ---
+    Nhận thêm model_score ---
     pipeline, unique_levels, unique_platforms, model_score = get_model(DATA_FILE)
     model_loaded = True
 except FileNotFoundError:
@@ -112,24 +103,7 @@ st.title("🤖 Demo Mô hình Dự đoán Điểm Nghiện Mạng Xã Hội")
 st.write("Nhập thông tin của sinh viên vào thanh bên trái để mô hình dự đoán điểm nghiện (`Addicted_Score`).")
 st.write("---")
 
-if model_loaded:
-    # --- THÊM MỚI: Hiển thị điểm số của mô hình ---
-    st.subheader("Đánh giá độ ổn định của mô hình")
-    st.metric(label="Điểm tin cậy R-squared (trên dữ liệu Test)", value=f"{model_score:.4f}")
-    
-    # Giải thích ý nghĩa của điểm số
-    if model_score < 0.3:
-        st.error("Điểm quá thấp! Mô hình này không đáng tin cậy.")
-    elif model_score < 0.6:
-        st.warning(f"Điểm trung bình ({model_score:.1%}). Mô hình chỉ giải thích được một phần nhỏ, dự đoán có thể sai lệch nhiều.")
-    else:
-        st.success(f"Điểm khá tốt ({model_score:.1%})! Mô hình giải thích được phần lớn sự biến động của dữ liệu. Có thể tin cậy ở mức demo.")
-    st.caption("Điểm $R^2$ (từ -∞ đến 1.0) đo lường mức độ mô hình dự đoán tốt trên *dữ liệu lạ*. Càng gần 1.0 càng tốt.")
-    st.write("---")
-    # --- Hết phần thêm mới ---
-
-
-    # --- Thanh bên (Sidebar) để nhập liệu (Giữ nguyên) ---
+    # --- Thanh bên (Sidebar) để nhập liệu
     st.sidebar.header("Nhập thông tin sinh viên:")
 
     gender = st.sidebar.selectbox("Giới tính (Gender):", ['Female', 'Male'])
@@ -139,7 +113,7 @@ if model_loaded:
     usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0, 0.1)
     sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
 
-    # --- Nút dự đoán (Giữ nguyên) ---
+    # --- Nút dự đoán
     if st.sidebar.button("Nhấn để Dự đoán"):
         input_data = {
             'Gender': [gender],
@@ -163,7 +137,7 @@ if model_loaded:
             value=f"{predicted_score:.5f}", # (Vẫn giữ 5 chữ số)
         )
 
-        # Đánh giá nhanh mức độ (Giữ nguyên)
+        # Đánh giá nhanh mức độ
         if predicted_score >= 8.0:
             st.error("🚨 Mức độ nghiện dự đoán: Rất Cao")
         elif predicted_score >= 6.0:
@@ -175,4 +149,5 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
