@@ -111,7 +111,7 @@ usage_hours = st.sidebar.slider("Giờ dùng trung bình/ngày:", 0.0, 12.0, 4.0
 sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
 
     # --- Nút dự đoán
-    if st.sidebar.button("Nhấn để Dự đoán"):
+if st.sidebar.button("Nhấn để Dự đoán"):
         input_data = {
             'Gender': [gender],
             'Academic_Level': [academic_level],
@@ -144,8 +144,9 @@ sleep_hours = st.sidebar.slider("Giờ ngủ/đêm:", 4.0, 10.0, 7.0, 0.1)
         else:
             st.success("✅ Mức độ nghiện dự đoán: Thấp")
 
-    else:
+else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
 
