@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split # <<< THÊM MỚI: Để ch
 from sklearn.metrics import r2_score, mean_absolute_error # <<< THÊM MỚI: Để đo hiệu suất
 
 # Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
-DATA_FILE = "Students Social Media Addiction1.csv"
+DATA_FILE = "Students Social Media Addiction.csv"
 
 # --- Hàm Huấn luyện Mô hình ---
 # Sử dụng @st.cache_resource để huấn luyện mô hình 1 LẦN DUY NHẤT
@@ -212,5 +212,6 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
