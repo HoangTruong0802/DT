@@ -4,9 +4,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
-import numpy as np # Cần để làm tròn kết quả
-from sklearn.model_selection import train_test_split # <<< THÊM MỚI: Để chia dữ liệu
-from sklearn.metrics import r2_score, mean_absolute_error # <<< THÊM MỚI: Để đo hiệu suất
+from sklearn.model_selection import train_test_split 
+from sklearn.metrics import r2_score, mean_absolute_error 
 
 # Tên tệp dữ liệu (phải nằm chung thư mục với app.py)
 DATA_FILE = "Students Social Media Addiction.csv"
@@ -36,14 +35,11 @@ def get_model(file_path):
 
     X_all = df[features]
     y_all = df[target_column]
-    
-    # <<< THÊM MỚI: Chia dữ liệu thành 80% train và 20% test
     X_train, X_test, y_train, y_test = train_test_split(
         X_all, y_all, 
         test_size=0.2,  # 20% dành cho test
         random_state=42 # Đảm bảo kết quả chia giống nhau mỗi lần chạy
     )
-    # --------------------------------------------------------
 
     numerical_features = [
         'Mental_Health_Score',
@@ -74,26 +70,19 @@ def get_model(file_path):
     ])
 
     # 5. Huấn luyện mô hình trên 80% dữ liệu (train)
-    # <<< THAY ĐỔI: Sử dụng X_train, y_train thay vì X_all, y_all
     pipeline.fit(X_train, y_train) 
-    
-    # <<< THÊM MỚI: Đánh giá mô hình trên 20% dữ liệu (test)
     y_pred = pipeline.predict(X_test)
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
-    # --------------------------------------------------------
 
     # 6. Trả về các giá trị duy nhất để dùng cho selectbox
     unique_levels = df['Academic_Level'].unique()
     unique_platforms = df['Most_Used_Platform'].unique()
-
-    # <<< THAY ĐỔI: Trả về thêm 2 điểm số r2 và mae
     return pipeline, unique_levels, unique_platforms, r2, mae
 
 # --- Tải mô hình ---
 # Lời gọi hàm này sẽ được cache lại
 try:
-    # <<< THAY ĐỔI: Nhận thêm 2 giá trị r2 và mae
     pipeline, unique_levels, unique_platforms, r2, mae = get_model(DATA_FILE)
     model_loaded = True
 except FileNotFoundError:
@@ -115,7 +104,6 @@ st.write("---")
 # Chỉ hiển thị giao diện nhập liệu nếu model đã tải thành công
 if model_loaded:
 
-    # <<< THÊM MỚI: Hiển thị hiệu suất mô hình
     st.subheader("Hiệu suất Mô hình (Train 80% / Test 20%)")
     st.write(f"Mô hình (DecisionTreeRegressor) đã được huấn luyện trên 80% dữ liệu và kiểm tra trên 20% dữ liệu còn lại.")
     
@@ -212,6 +200,7 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
 
