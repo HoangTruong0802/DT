@@ -4,9 +4,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
-import numpy as np # Cần để làm tròn kết quả
-
-# --- THÊM MỚI: Thư viện để chia dữ liệu và chấm điểm ---
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score # Dùng để tính điểm R-squared
 
@@ -40,7 +37,7 @@ def get_model(file_path):
     # --- SỬA ĐỔI: Chia dữ liệu thành 2 phần ---
     # 80% để huấn luyện (train), 20% để kiểm tra (test)
     X_train, X_test, y_train, y_test = train_test_split(
-        X_all, y_all, test_size=0.4, random_state=42
+        X_all, y_all, test_size=0.2, random_state=42
     )
 
     # (Các đặc trưng số và chữ giữ nguyên)
@@ -175,5 +172,6 @@ if model_loaded:
 
     else:
         st.info("👈 Nhập thông tin ở thanh bên trái và nhấn nút 'Nhấn để Dự đoán'.")
+
 
 
