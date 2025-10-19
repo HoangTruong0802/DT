@@ -163,4 +163,5 @@ if model_loaded:
     # 6. Giờ ngủ (thanh trượt)
     sleep_hours = st.sidebar.slider(
         "Giờ ngủ/đêm:",
-        min_value=4.0, max_value=10.0, value=7.0,
+        min_value=4.0, max_value=10.0, value=7.0,)
+
