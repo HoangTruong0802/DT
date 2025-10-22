@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 
 try:
-    loaded = joblib.load("DTmodel (4).pkl") 
+    loaded = joblib.load("DTmodel.pkl") 
     if isinstance(loaded, tuple) and len(loaded) == 2:
         DT_model, encoder = loaded
         st.success("Đã load thành công mô hình và encoder")
@@ -71,4 +71,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
