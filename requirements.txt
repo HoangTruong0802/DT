@@ -1,6 +1,9 @@
-streamlit
+flask
+flask-cors
 pandas
-scikit-learn
+numpy
 joblib
-
-
+category_encoders
+gunicorn
+scikit-learn==1.6.1
+streamlit
