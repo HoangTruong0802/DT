@@ -40,7 +40,7 @@ def main():
         submitted = st.form_submit_button(" Dự đoán")
 
         if submitted:
-            if rf_model is None or encoder is None:
+            if DT_model is None or encoder is None:
                 st.error(" Không thể dự đoán vì mô hình chưa được load đúng cách.")
                 return
 
@@ -71,5 +71,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
