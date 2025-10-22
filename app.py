@@ -3,16 +3,16 @@ import pandas as pd
 import joblib
 
 try:
-    loaded = joblib.load("rfmodel (4).pkl") 
+    loaded = joblib.load("DTmodel (4).pkl") 
     if isinstance(loaded, tuple) and len(loaded) == 2:
-        rf_model, encoder = loaded
+        DT_model, encoder = loaded
         st.success("Đã load thành công mô hình và encoder")
     else:
-        st.error("File không phải dạng tuple (rf_model, encoder)")
-        rf_model, encoder = None, None
+        st.error("File không phải dạng tuple (DT_model, encoder)")
+        DT_model, encoder = None, None
 except Exception as e:
     st.error(f" Không thể load mô hình: {e}")
-    rf_model, encoder = None, None
+    DT_model, encoder = None, None
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
 
                 X = encoder.transform(data)
 
-                prediction = rf_model.predict(X)[0]
+                prediction = DT_model.predict(X)[0]
                 level = "Thấp" if prediction < 4 else ("Trung bình" if prediction < 7 else "Cao")
 
                 st.success(f"**Điểm dự đoán:** {round(prediction, 6)}")
@@ -71,3 +71,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
